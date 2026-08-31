@@ -1,0 +1,11 @@
+C:\Github\CQRS\src\Ledger.Domain\bin\Release\net10.0\Ledger.Domain.deps.json
+C:\Github\CQRS\src\Ledger.Domain\bin\Release\net10.0\Ledger.Domain.dll
+C:\Github\CQRS\src\Ledger.Domain\bin\Release\net10.0\Ledger.Domain.pdb
+C:\Github\CQRS\src\Ledger.Domain\obj\Release\net10.0\Ledger.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Github\CQRS\src\Ledger.Domain\obj\Release\net10.0\Ledger.Domain.AssemblyInfoInputs.cache
+C:\Github\CQRS\src\Ledger.Domain\obj\Release\net10.0\Ledger.Domain.AssemblyInfo.cs
+C:\Github\CQRS\src\Ledger.Domain\obj\Release\net10.0\Ledger.Domain.csproj.CoreCompileInputs.cache
+C:\Github\CQRS\src\Ledger.Domain\obj\Release\net10.0\Ledger.Domain.dll
+C:\Github\CQRS\src\Ledger.Domain\obj\Release\net10.0\refint\Ledger.Domain.dll
+C:\Github\CQRS\src\Ledger.Domain\obj\Release\net10.0\Ledger.Domain.pdb
+C:\Github\CQRS\src\Ledger.Domain\obj\Release\net10.0\ref\Ledger.Domain.dll

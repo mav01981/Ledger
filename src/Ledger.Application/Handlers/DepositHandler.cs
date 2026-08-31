@@ -1,0 +1,60 @@
+using MediatR;
+using Ledger.Application.Commands;
+using Ledger.Domain;
+using Ledger.Domain.Events;
+
+namespace Ledger.Application.Handlers;
+
+public class DepositHandler : IRequestHandler<DepositCommand, CommandResult>
+{
+    private readonly IEventStore _eventStore;
+    private readonly IIdempotencyService _idempotency;
+
+    public DepositHandler(IEventStore eventStore, IIdempotencyService idempotency)
+    {
+        _eventStore = eventStore;
+        _idempotency = idempotency;
+    }
+
+    public async Task<CommandResult> Handle(DepositCommand request, CancellationToken ct)
+    {
+        if (await _idempotency.HasBeenProcessedAsync(request.IdempotencyKey, ct))
+        {
+            return CommandResult.Fail("Duplicate command.");
+        }
+
+        var account = await LoadAccountAsync(request.AccountId, ct);
+
+        // Check if account exists
+        if (account.Version < 0)
+        {
+            return CommandResult.Fail("Account not found.");
+        }
+
+        var txId = Guid.NewGuid();
+
+        try
+        {
+            account.Deposit(txId, new Money(request.Amount));
+        }
+        catch (DomainException ex)
+        {
+            return CommandResult.Fail(ex.Message);
+        }
+
+        var events = account.UncommittedEvents;
+
+        await _eventStore.AppendToStreamAsync(request.AccountId, events, account.Version - events.Count, ct);
+        await _idempotency.MarkProcessedAsync(request.IdempotencyKey, request.AccountId, ct);
+
+        return CommandResult.Ok(request.AccountId, account.Version);
+    }
+
+    private async Task<Account> LoadAccountAsync(Guid id, CancellationToken ct)
+    {
+        var events = await _eventStore.ReadStreamAsync(id, ct: ct);
+        var account = new Account();
+        account.LoadFromHistory(events);
+        return account;
+    }
+}

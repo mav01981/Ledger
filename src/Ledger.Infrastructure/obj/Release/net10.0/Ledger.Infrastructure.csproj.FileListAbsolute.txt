@@ -1,0 +1,17 @@
+C:\Github\CQRS\src\Ledger.Infrastructure\bin\Release\net10.0\Ledger.Infrastructure.deps.json
+C:\Github\CQRS\src\Ledger.Infrastructure\bin\Release\net10.0\Ledger.Infrastructure.runtimeconfig.json
+C:\Github\CQRS\src\Ledger.Infrastructure\bin\Release\net10.0\Ledger.Infrastructure.dll
+C:\Github\CQRS\src\Ledger.Infrastructure\bin\Release\net10.0\Ledger.Infrastructure.pdb
+C:\Github\CQRS\src\Ledger.Infrastructure\bin\Release\net10.0\Ledger.Domain.dll
+C:\Github\CQRS\src\Ledger.Infrastructure\bin\Release\net10.0\Ledger.Domain.pdb
+C:\Github\CQRS\src\Ledger.Infrastructure\obj\Release\net10.0\Ledger.Infrastructure.csproj.AssemblyReference.cache
+C:\Github\CQRS\src\Ledger.Infrastructure\obj\Release\net10.0\Ledger.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+C:\Github\CQRS\src\Ledger.Infrastructure\obj\Release\net10.0\Ledger.Infrastructure.AssemblyInfoInputs.cache
+C:\Github\CQRS\src\Ledger.Infrastructure\obj\Release\net10.0\Ledger.Infrastructure.AssemblyInfo.cs
+C:\Github\CQRS\src\Ledger.Infrastructure\obj\Release\net10.0\Ledger.Infrastructure.csproj.CoreCompileInputs.cache
+C:\Github\CQRS\src\Ledger.Infrastructure\obj\Release\net10.0\Ledger.I.6E9A12EF.Up2Date
+C:\Github\CQRS\src\Ledger.Infrastructure\obj\Release\net10.0\Ledger.Infrastructure.dll
+C:\Github\CQRS\src\Ledger.Infrastructure\obj\Release\net10.0\refint\Ledger.Infrastructure.dll
+C:\Github\CQRS\src\Ledger.Infrastructure\obj\Release\net10.0\Ledger.Infrastructure.pdb
+C:\Github\CQRS\src\Ledger.Infrastructure\obj\Release\net10.0\Ledger.Infrastructure.genruntimeconfig.cache
+C:\Github\CQRS\src\Ledger.Infrastructure\obj\Release\net10.0\ref\Ledger.Infrastructure.dll

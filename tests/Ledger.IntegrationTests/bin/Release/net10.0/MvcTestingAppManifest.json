@@ -1,0 +1,6 @@
+{
+  "Ledger.Api, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Github\\CQRS\\src\\Ledger.Api",
+  "Ledger.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Github\\CQRS\\src\\Ledger.Application",
+  "Ledger.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Github\\CQRS\\src\\Ledger.Domain",
+  "Ledger.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Github\\CQRS\\src\\Ledger.Infrastructure"
+}
