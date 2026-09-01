@@ -33,18 +33,20 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Run unit tests
-        run: dotnet test tests/Ledger.Tests/Ledger.Tests.csproj \
-              --no-build \
-              --configuration Release \
-              --logger "trx;LogFileName=unit-tests.trx" \
-              --results-directory TestResults
+        run: >
+          dotnet test tests/Ledger.Tests/Ledger.Tests.csproj
+          --no-build
+          --configuration Release
+          --logger "trx;LogFileName=unit-tests.trx"
+          --results-directory TestResults
 
       - name: Run integration tests (e2e)
-        run: dotnet test tests/Ledger.IntegrationTests/Ledger.IntegrationTests.csproj \
-              --no-build \
-              --configuration Release \
-              --logger "trx;LogFileName=integration-tests.trx" \
-              --results-directory TestResults
+        run: >
+          dotnet test tests/Ledger.IntegrationTests/Ledger.IntegrationTests.csproj
+          --no-build
+          --configuration Release
+          --logger "trx;LogFileName=integration-tests.trx"
+          --results-directory TestResults
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
