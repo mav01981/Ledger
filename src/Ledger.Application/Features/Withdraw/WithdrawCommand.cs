@@ -1,8 +1,9 @@
+using Ledger.Application.Shared;
 using MediatR;
 
-namespace Ledger.Application.Commands;
+namespace Ledger.Application.Features.Withdraw;
 
-public record DepositCommand(
+public record WithdrawCommand(
     Guid AccountId,
     decimal Amount,
     string IdempotencyKey

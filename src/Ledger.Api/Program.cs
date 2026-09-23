@@ -14,7 +14,7 @@ builder.Services.AddSwaggerGen();
 
 // MediatR
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(
-    typeof(Ledger.Application.Commands.OpenAccountCommand).Assembly));
+    typeof(Ledger.Application.Features.OpenAccount.OpenAccountCommand).Assembly));
 
 // Infrastructure (EF Core, event store, outbox, projections)
 builder.Services.AddLedgerInfrastructure(builder.Configuration);

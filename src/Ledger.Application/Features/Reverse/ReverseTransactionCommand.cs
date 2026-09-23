@@ -1,6 +1,7 @@
+using Ledger.Application.Shared;
 using MediatR;
 
-namespace Ledger.Application.Commands;
+namespace Ledger.Application.Features.Reverse;
 
 public record ReverseTransactionCommand(
     Guid TransactionId,

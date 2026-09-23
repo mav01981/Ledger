@@ -1,13 +1,4 @@
-using MediatR;
-using Ledger.Domain;
-
-namespace Ledger.Application.Commands;
-
-public record OpenAccountCommand(
-    Guid AccountId,
-    AccountType AccountType,
-    string IdempotencyKey
-) : IRequest<CommandResult>;
+namespace Ledger.Application.Shared;
 
 public record CommandResult(
     bool Success,

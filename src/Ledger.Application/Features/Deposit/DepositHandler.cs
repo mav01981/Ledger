@@ -1,9 +1,10 @@
-using MediatR;
-using Ledger.Application.Commands;
+using Ledger.Application.Shared;
+using Ledger.Application.Features.OpenAccount;
 using Ledger.Domain;
 using Ledger.Domain.Events;
+using MediatR;
 
-namespace Ledger.Application.Handlers;
+namespace Ledger.Application.Features.Deposit;
 
 public class DepositHandler : IRequestHandler<DepositCommand, CommandResult>
 {

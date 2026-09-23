@@ -1,9 +1,9 @@
-using MediatR;
-using Ledger.Application.Commands;
+using Ledger.Application.Shared;
 using Ledger.Domain;
 using Ledger.Domain.Events;
+using MediatR;
 
-namespace Ledger.Application.Handlers;
+namespace Ledger.Application.Features.Transfer;
 
 public class TransferHandler : IRequestHandler<TransferCommand, CommandResult>
 {
@@ -54,7 +54,7 @@ public class TransferHandler : IRequestHandler<TransferCommand, CommandResult>
         await _eventStore.AppendToStreamAsync(request.ToAccountId, toEvents, toAccount.Version - toEvents.Count, ct);
 
         // Record the transfer for reversal support
-        var transfer = new Transfer
+        var transfer = new Ledger.Domain.Transfer
         {
             TransactionId = transferId,
             Lines =
@@ -62,7 +62,7 @@ public class TransferHandler : IRequestHandler<TransferCommand, CommandResult>
                 new(request.FromAccountId, amount, DebitCredit.Debit),
                 new(request.ToAccountId, amount, DebitCredit.Credit)
             ],
-            Status = TransferStatus.Posted,
+            Status = Ledger.Domain.TransferStatus.Posted,
             CreatedAt = _timeProvider.GetUtcNow().UtcDateTime
         };
         await _transactionStore.SaveAsync(transfer, ct);

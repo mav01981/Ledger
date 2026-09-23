@@ -1,9 +1,9 @@
+using Ledger.Application.Shared;
 using MediatR;
-using Ledger.Application.Commands;
 using Ledger.Domain;
 using Ledger.Domain.Events;
 
-namespace Ledger.Application.Handlers;
+namespace Ledger.Application.Features.OpenAccount;
 
 public class OpenAccountHandler : IRequestHandler<OpenAccountCommand, CommandResult>
 {
