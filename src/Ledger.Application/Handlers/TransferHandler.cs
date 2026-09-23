@@ -10,12 +10,14 @@ public class TransferHandler : IRequestHandler<TransferCommand, CommandResult>
     private readonly IEventStore _eventStore;
     private readonly IIdempotencyService _idempotency;
     private readonly ITransactionStore _transactionStore;
+    private readonly TimeProvider _timeProvider;
 
-    public TransferHandler(IEventStore eventStore, IIdempotencyService idempotency, ITransactionStore transactionStore)
+    public TransferHandler(IEventStore eventStore, IIdempotencyService idempotency, ITransactionStore transactionStore, TimeProvider timeProvider)
     {
         _eventStore = eventStore;
         _idempotency = idempotency;
         _transactionStore = transactionStore;
+        _timeProvider = timeProvider;
     }
 
     public async Task<CommandResult> Handle(TransferCommand request, CancellationToken ct)
@@ -37,8 +39,8 @@ public class TransferHandler : IRequestHandler<TransferCommand, CommandResult>
 
         try
         {
-            fromAccount.ApplyDebit(transferId, amount);
-            toAccount.ApplyCredit(transferId, amount);
+            fromAccount.ApplyDebit(transferId, amount, _timeProvider.GetUtcNow().UtcDateTime);
+            toAccount.ApplyCredit(transferId, amount, _timeProvider.GetUtcNow().UtcDateTime);
         }
         catch (DomainException ex)
         {
@@ -61,7 +63,7 @@ public class TransferHandler : IRequestHandler<TransferCommand, CommandResult>
                 new(request.ToAccountId, amount, DebitCredit.Credit)
             ],
             Status = TransferStatus.Posted,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = _timeProvider.GetUtcNow().UtcDateTime
         };
         await _transactionStore.SaveAsync(transfer, ct);
 

@@ -9,11 +9,13 @@ public class WithdrawHandler : IRequestHandler<WithdrawCommand, CommandResult>
 {
     private readonly IEventStore _eventStore;
     private readonly IIdempotencyService _idempotency;
+    private readonly TimeProvider _timeProvider;
 
-    public WithdrawHandler(IEventStore eventStore, IIdempotencyService idempotency)
+    public WithdrawHandler(IEventStore eventStore, IIdempotencyService idempotency, TimeProvider timeProvider)
     {
         _eventStore = eventStore;
         _idempotency = idempotency;
+        _timeProvider = timeProvider;
     }
 
     public async Task<CommandResult> Handle(WithdrawCommand request, CancellationToken ct)
@@ -33,7 +35,7 @@ public class WithdrawHandler : IRequestHandler<WithdrawCommand, CommandResult>
 
         try
         {
-            account.Withdraw(txId, new Money(request.Amount));
+            account.Withdraw(txId, new Money(request.Amount), _timeProvider.GetUtcNow().UtcDateTime);
         }
         catch (DomainException ex)
         {

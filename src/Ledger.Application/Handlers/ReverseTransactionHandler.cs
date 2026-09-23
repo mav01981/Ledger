@@ -10,12 +10,14 @@ public class ReverseTransactionHandler : IRequestHandler<ReverseTransactionComma
     private readonly IEventStore _eventStore;
     private readonly IIdempotencyService _idempotency;
     private readonly ITransactionStore _transactionStore;
+    private readonly TimeProvider _timeProvider;
 
-    public ReverseTransactionHandler(IEventStore eventStore, IIdempotencyService idempotency, ITransactionStore transactionStore)
+    public ReverseTransactionHandler(IEventStore eventStore, IIdempotencyService idempotency, ITransactionStore transactionStore, TimeProvider timeProvider)
     {
         _eventStore = eventStore;
         _idempotency = idempotency;
         _transactionStore = transactionStore;
+        _timeProvider = timeProvider;
     }
 
     public async Task<CommandResult> Handle(ReverseTransactionCommand request, CancellationToken ct)
@@ -47,11 +49,11 @@ public class ReverseTransactionHandler : IRequestHandler<ReverseTransactionComma
 
                 if (line.Direction == DebitCredit.Debit)
                 {
-                    account.ApplyCredit(reversalId, oppositeAmount);
+                    account.ApplyCredit(reversalId, oppositeAmount, _timeProvider.GetUtcNow().UtcDateTime);
                 }
                 else
                 {
-                    account.ApplyDebit(reversalId, oppositeAmount);
+                    account.ApplyDebit(reversalId, oppositeAmount, _timeProvider.GetUtcNow().UtcDateTime);
                 }
 
                 var events = account.UncommittedEvents;

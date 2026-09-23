@@ -13,11 +13,13 @@ public class OutboxRelay : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<OutboxRelay> _logger;
+    private readonly TimeProvider _timeProvider;
 
-    public OutboxRelay(IServiceProvider serviceProvider, ILogger<OutboxRelay> logger)
+    public OutboxRelay(IServiceProvider serviceProvider, ILogger<OutboxRelay> logger, TimeProvider timeProvider)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
+        _timeProvider = timeProvider;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -56,7 +58,7 @@ public class OutboxRelay : BackgroundService
                 var @event = EventSerializer.Deserialize(message.EventType, message.Payload);
                 await projectionUpdater.UpdateAsync(@event, ct);
 
-                message.ProcessedAt = DateTime.UtcNow;
+                message.ProcessedAt = _timeProvider.GetUtcNow().UtcDateTime;
                 await context.SaveChangesAsync(ct);
             }
             catch (Exception ex)

@@ -9,6 +9,7 @@ using Ledger.Infrastructure.Transactions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Ledger.Infrastructure;
 
@@ -22,6 +23,9 @@ public static class DependencyInjection
 
         services.AddDbContext<LedgerDbContext>(options =>
             options.UseNpgsql(connectionString));
+
+        // Time is a dependency like any other: TryAdd keeps a test/fake registration if one is already present.
+        services.TryAddSingleton(TimeProvider.System);
 
         services.AddScoped<IEventStore, PostgresEventStore>();
         services.AddScoped<ISnapshotStore, PostgresSnapshotStore>();

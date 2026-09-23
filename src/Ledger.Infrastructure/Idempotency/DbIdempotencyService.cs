@@ -7,10 +7,12 @@ namespace Ledger.Infrastructure.Idempotency;
 public class DbIdempotencyService : IIdempotencyService
 {
     private readonly LedgerDbContext _context;
+    private readonly TimeProvider _timeProvider;
 
-    public DbIdempotencyService(LedgerDbContext context)
+    public DbIdempotencyService(LedgerDbContext context, TimeProvider timeProvider)
     {
         _context = context;
+        _timeProvider = timeProvider;
     }
 
     public async Task<bool> HasBeenProcessedAsync(string idempotencyKey, CancellationToken ct = default)
@@ -25,7 +27,7 @@ public class DbIdempotencyService : IIdempotencyService
         {
             Key = idempotencyKey,
             AggregateId = aggregateId,
-            ProcessedAt = DateTime.UtcNow
+            ProcessedAt = _timeProvider.GetUtcNow().UtcDateTime
         };
         
         _context.IdempotencyRecords.Add(record);

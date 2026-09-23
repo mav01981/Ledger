@@ -12,23 +12,23 @@ public class Account : AggregateRoot
     // For rehydration
     public Account() { }
 
-    public static Account Open(Guid accountId, AccountType accountType)
+    public static Account Open(Guid accountId, AccountType accountType, DateTime occurredAt)
     {
         var account = new Account();
-        account.Apply(new AccountOpened(accountId, accountType) { Timestamp = DateTime.UtcNow });
+        account.Apply(AccountOpened.Create(accountId, accountType, occurredAt));
         return account;
     }
 
-    public void Deposit(Guid transactionId, Money amount)
+    public void Deposit(Guid transactionId, Money amount, DateTime occurredAt)
     {
         EnsureOpen();
         if (amount.IsZero || amount.IsNegative)
             throw new DomainException("Deposit amount must be positive.");
 
-        Apply(FundsDeposited.Create(Id, transactionId, amount, DateTime.UtcNow));
+        Apply(FundsDeposited.Create(Id, transactionId, amount, occurredAt));
     }
 
-    public void Withdraw(Guid transactionId, Money amount)
+    public void Withdraw(Guid transactionId, Money amount, DateTime occurredAt)
     {
         EnsureOpen();
         if (amount.IsZero || amount.IsNegative)
@@ -38,23 +38,23 @@ public class Account : AggregateRoot
         if (newBalance.IsNegative && AccountType != AccountType.Overdraft)
             throw new DomainException("Insufficient funds.");
 
-        Apply(FundsWithdrawn.Create(Id, transactionId, amount, DateTime.UtcNow));
+        Apply(FundsWithdrawn.Create(Id, transactionId, amount, occurredAt));
     }
 
-    public void ApplyDebit(Guid transactionId, Money amount)
+    public void ApplyDebit(Guid transactionId, Money amount, DateTime occurredAt)
     {
         EnsureOpen();
         var newBalance = Balance - amount;
         if (newBalance.IsNegative && AccountType != AccountType.Overdraft)
             throw new DomainException($"Insufficient funds in account {Id}.");
 
-        Apply(FundsWithdrawn.Create(Id, transactionId, amount, DateTime.UtcNow));
+        Apply(FundsWithdrawn.Create(Id, transactionId, amount, occurredAt));
     }
 
-    public void ApplyCredit(Guid transactionId, Money amount)
+    public void ApplyCredit(Guid transactionId, Money amount, DateTime occurredAt)
     {
         EnsureOpen();
-        Apply(FundsDeposited.Create(Id, transactionId, amount, DateTime.UtcNow));
+        Apply(FundsDeposited.Create(Id, transactionId, amount, occurredAt));
     }
 
     private void EnsureOpen()

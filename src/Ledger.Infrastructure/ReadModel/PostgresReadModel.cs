@@ -7,102 +7,116 @@ namespace Ledger.Infrastructure.ReadModel;
 
 public class PostgresReadModel : IReadModel
 {
-    private readonly LedgerDbContext _context;
+    // Explicit bound: a read endpoint must never pull an unbounded result set into memory.
+    // Replace with real page/pageSize paging (on the query, handler, and endpoint together) once clients need it.
+    private const int MaxAccountsReturned = 500;
 
-    public PostgresReadModel(LedgerDbContext context)
+    private const string CreditDirection = "Credit";
+    private const string DebitDirection = "Debit";
+
+    private readonly LedgerDbContext _context;
+    private readonly TimeProvider _timeProvider;
+
+    public PostgresReadModel(LedgerDbContext context, TimeProvider timeProvider)
     {
         _context = context;
+        _timeProvider = timeProvider;
     }
 
-    public async Task<AccountBalanceDto?> GetAccountBalanceAsync(Guid accountId, CancellationToken ct = default)
-    {
-        var record = await _context.AccountBalances
-            .FirstOrDefaultAsync(a => a.AccountId == accountId, ct);
-
-        if (record == null) return null;
-
-        return new AccountBalanceDto(
-            record.AccountId,
-            record.AccountType,
-            record.Balance,
-            record.Status,
-            record.OpenedAt,
-            record.LastEventVersion
-        );
-    }
+    public Task<AccountBalanceDto?> GetAccountBalanceAsync(Guid accountId, CancellationToken ct = default)
+        => _context.AccountBalances
+            .AsNoTracking()
+            .Where(a => a.AccountId == accountId)
+            .Select(a => new AccountBalanceDto(
+                a.AccountId,
+                a.AccountType,
+                a.Balance,
+                a.Status,
+                a.OpenedAt,
+                a.LastEventVersion))
+            .FirstOrDefaultAsync(ct);
 
     public async Task<IReadOnlyList<AccountBalanceDto>> GetAllAccountsAsync(CancellationToken ct = default)
-    {
-        var records = await _context.AccountBalances.ToListAsync(ct);
-        return records.Select(r => new AccountBalanceDto(
-            r.AccountId,
-            r.AccountType,
-            r.Balance,
-            r.Status,
-            r.OpenedAt,
-            r.LastEventVersion
-        )).ToList();
-    }
+        => await _context.AccountBalances
+            .AsNoTracking()
+            .OrderBy(a => a.OpenedAt)
+            .ThenBy(a => a.AccountId)
+            .Take(MaxAccountsReturned)
+            .Select(a => new AccountBalanceDto(
+                a.AccountId,
+                a.AccountType,
+                a.Balance,
+                a.Status,
+                a.OpenedAt,
+                a.LastEventVersion))
+            .ToListAsync(ct);
 
     public async Task<TransactionHistoryDto?> GetTransactionHistoryAsync(Guid accountId, CancellationToken ct = default)
     {
-        var records = await _context.TransactionHistory
-            .Where(t => t.AccountId == accountId)
-            .OrderBy(t => t.Timestamp)
-            .ToListAsync(ct);
+        var entries = await ReadEntriesAsync(accountId, from: null, to: null, ct);
 
-        if (records.Count == 0) return null;
-
-        var entries = records.Select(r => new TransactionEntryDto(
-            r.TransactionId,
-            r.Timestamp,
-            r.Amount,
-            r.Direction,
-            r.RunningBalance
-        )).ToList();
-
-        return new TransactionHistoryDto(accountId, entries);
+        return entries.Count == 0 ? null : new TransactionHistoryDto(accountId, entries);
     }
 
     public async Task<StatementDto?> GetStatementAsync(Guid accountId, DateTime? periodStart, DateTime? periodEnd, CancellationToken ct = default)
     {
-        var start = periodStart ?? new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
-        var end = periodEnd ?? start.AddMonths(1);
+        var start = AsUtc(periodStart) ?? FirstDayOfCurrentMonthUtc();
+        var end = AsUtc(periodEnd) ?? start.AddMonths(1);
 
-        var records = await _context.TransactionHistory
-            .Where(t => t.AccountId == accountId && t.Timestamp >= start && t.Timestamp < end)
-            .OrderBy(t => t.Timestamp)
-            .ToListAsync(ct);
+        var entries = await ReadEntriesAsync(accountId, start, end, ct);
 
-        if (records.Count == 0) return null;
-
-        var entries = records.Select(r => new TransactionEntryDto(
-            r.TransactionId,
-            r.Timestamp,
-            r.Amount,
-            r.Direction,
-            r.RunningBalance
-        )).ToList();
-
-        var openingBalance = entries.Count > 0 && entries.First().Direction == "Credit"
-            ? entries.First().RunningBalance - entries.First().Amount
-            : entries.Count > 0 && entries.First().Direction == "Debit"
-                ? entries.First().RunningBalance + entries.First().Amount
-                : 0m;
-
-        var closingBalance = entries.Count > 0 ? entries.Last().RunningBalance : 0m;
-        var totalCredits = entries.Where(e => e.Direction == "Credit").Sum(e => e.Amount);
-        var totalDebits = entries.Where(e => e.Direction == "Debit").Sum(e => e.Amount);
+        if (entries.Count == 0) return null;
 
         return new StatementDto(
             accountId,
             start,
             end,
-            openingBalance,
-            closingBalance,
-            totalCredits,
-            totalDebits,
-            entries
-        );
+            OpeningBalance(entries[0]),
+            entries[^1].RunningBalance,
+            TotalForDirection(entries, CreditDirection),
+            TotalForDirection(entries, DebitDirection),
+            entries);
     }
+
+    private Task<List<TransactionEntryDto>> ReadEntriesAsync(Guid accountId, DateTime? from, DateTime? to, CancellationToken ct)
+        => _context.TransactionHistory
+            .AsNoTracking()
+            .Where(t => t.AccountId == accountId)
+            .Where(t => from == null || t.Timestamp >= from)
+            .Where(t => to == null || t.Timestamp < to)
+            .OrderBy(t => t.Timestamp)
+            .Select(t => new TransactionEntryDto(
+                t.TransactionId,
+                t.Timestamp,
+                t.Amount,
+                t.Direction,
+                t.RunningBalance))
+            .ToListAsync(ct);
+
+    private DateTime FirstDayOfCurrentMonthUtc()
+    {
+        // Read the clock once: Year and Month can never come from different months across a month boundary.
+        var now = _timeProvider.GetUtcNow();
+
+        // Kind must be Utc: Npgsql rejects Unspecified/Local DateTimes for timestamp with time zone parameters.
+        return new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+    }
+
+    private static DateTime? AsUtc(DateTime? value) => value switch
+    {
+        null => null,
+        { Kind: DateTimeKind.Utc } utc => utc,
+        { Kind: DateTimeKind.Local } local => local.ToUniversalTime(),
+        _ => DateTime.SpecifyKind(value.Value, DateTimeKind.Utc)
+    };
+
+    private static decimal OpeningBalance(TransactionEntryDto first) => first.Direction switch
+    {
+        CreditDirection => first.RunningBalance - first.Amount,
+        DebitDirection => first.RunningBalance + first.Amount,
+        _ => 0m
+    };
+
+    private static decimal TotalForDirection(IEnumerable<TransactionEntryDto> entries, string direction)
+        => entries.Where(e => e.Direction == direction).Sum(e => e.Amount);
 }

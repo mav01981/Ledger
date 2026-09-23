@@ -9,11 +9,13 @@ public class OpenAccountHandler : IRequestHandler<OpenAccountCommand, CommandRes
 {
     private readonly IEventStore _eventStore;
     private readonly IIdempotencyService _idempotency;
+    private readonly TimeProvider _timeProvider;
 
-    public OpenAccountHandler(IEventStore eventStore, IIdempotencyService idempotency)
+    public OpenAccountHandler(IEventStore eventStore, IIdempotencyService idempotency, TimeProvider timeProvider)
     {
         _eventStore = eventStore;
         _idempotency = idempotency;
+        _timeProvider = timeProvider;
     }
 
     public async Task<CommandResult> Handle(OpenAccountCommand request, CancellationToken ct)
@@ -23,7 +25,7 @@ public class OpenAccountHandler : IRequestHandler<OpenAccountCommand, CommandRes
             return CommandResult.Fail("Duplicate command.");
         }
         
-        var account = Account.Open(request.AccountId, request.AccountType);
+        var account = Account.Open(request.AccountId, request.AccountType, _timeProvider.GetUtcNow().UtcDateTime);
         var events = account.UncommittedEvents;
 
         // Event store writes events + outbox atomically
