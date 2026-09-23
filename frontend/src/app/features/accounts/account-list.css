@@ -1,0 +1,19 @@
+.open-form {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.open-form .field {
+  margin-bottom: 0;
+  min-width: 10rem;
+}
+
+.card-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--space-4);
+}

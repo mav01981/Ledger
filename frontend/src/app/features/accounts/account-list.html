@@ -1,0 +1,49 @@
+<section>
+  <header class="page-header">
+    <div>
+      <h1>Accounts</h1>
+      <p class="lede">
+        Demo wallets backed by an event-sourced ledger. Every balance below is rebuilt from
+        immutable events — open an account and watch the stream grow.
+      </p>
+    </div>
+    <form class="open-form" (submit)="submitOpenAccount($event)">
+      <div class="field">
+        <label for="new-account-type">Account type</label>
+        <select id="new-account-type" [disabled]="opening()" (change)="onTypeChange($event)">
+          <option value="0" [selected]="newAccountType() === AccountType.Standard">Standard</option>
+          <option value="1" [selected]="newAccountType() === AccountType.Overdraft">Overdraft</option>
+        </select>
+      </div>
+      <button type="submit" class="primary" [disabled]="opening()">
+        {{ opening() ? 'Opening…' : 'Open account' }}
+      </button>
+    </form>
+  </header>
+
+  @if (store.writeError(); as error) {
+    <div class="alert error" role="alert"><p>{{ error }}</p></div>
+  }
+
+  @if (store.accountsError(); as error) {
+    <div class="alert error" role="alert">
+      <p>{{ error }}</p>
+      <button type="button" (click)="retryLoad()">Retry</button>
+    </div>
+  }
+
+  @if (store.accountsLoading() && store.accounts().length === 0) {
+    <p class="muted">Loading accounts…</p>
+  } @else if (store.accounts().length === 0 && !store.accountsError()) {
+    <div class="empty-state">
+      <p><strong>No accounts yet.</strong></p>
+      <p class="muted">Open a standard account above to start generating events.</p>
+    </div>
+  } @else {
+    <ul class="card-grid" aria-label="Accounts">
+      @for (account of store.accounts(); track account.accountId) {
+        <li><app-account-card [account]="account" /></li>
+      }
+    </ul>
+  }
+</section>

@@ -1,0 +1,23 @@
+<div class="balance" [class.replayed]="asOf() !== null">
+  <p class="balance-label">
+    @if (asOf() !== null) {
+      Replayed balance — as of {{ asOf() | date: 'medium' }}
+    } @else {
+      Current balance
+      <span class="live" title="Refreshed by polling every 3 seconds">
+        <span class="live-dot" aria-hidden="true"></span>
+        live · polls 3s
+      </span>
+    }
+  </p>
+  <p class="balance-amount">
+    @if (balance() !== null) {
+      {{ balance() | number: '1.2-2' }}
+    } @else {
+      <span class="placeholder">—</span>
+    }
+    @if (loading()) {
+      <span class="spinner" role="status" aria-label="Replaying events"></span>
+    }
+  </p>
+</div>

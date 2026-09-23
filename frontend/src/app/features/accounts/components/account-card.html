@@ -1,0 +1,20 @@
+<a class="card" [routerLink]="['/accounts', account().accountId]">
+  <div class="card-top">
+    <span class="badge" [class.overdraft]="account().accountType === 'Overdraft'">
+      {{ account().accountType }}
+    </span>
+    <span class="status muted">{{ account().status }}</span>
+  </div>
+  <p class="amount">{{ account().balance | number: '1.2-2' }}</p>
+  <dl class="card-meta">
+    <div>
+      <dt>Opened</dt>
+      <dd>{{ account().openedAt | date: 'medium' }}</dd>
+    </div>
+    <div>
+      <dt>Stream version</dt>
+      <dd>{{ account().lastEventVersion }}</dd>
+    </div>
+  </dl>
+  <span class="cta">Replay history →</span>
+</a>

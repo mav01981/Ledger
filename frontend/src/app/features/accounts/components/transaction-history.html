@@ -1,0 +1,42 @@
+@if (transactions() === null) {
+  <p class="muted">Loading event stream…</p>
+} @else if ((transactions()?.length ?? 0) === 0) {
+  <div class="empty-state">
+    <p><strong>No events yet.</strong></p>
+    <p class="muted">Record a transaction to start building this account's history.</p>
+  </div>
+} @else {
+  @if (sparklinePoints(); as points) {
+    <figure class="sparkline">
+      <svg
+        viewBox="0 0 100 30"
+        preserveAspectRatio="none"
+        role="img"
+        aria-label="Running balance over time"
+      >
+        <polyline
+          [attr.points]="points"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          vector-effect="non-scaling-stroke"
+        />
+      </svg>
+      <figcaption class="muted">Running balance over time</figcaption>
+    </figure>
+  }
+  <ol class="tx-list">
+    @for (tx of transactions() ?? []; track tx.transactionId) {
+      <li class="tx-row" [class.debit]="tx.direction === 'Debit'">
+        <span class="direction">{{ tx.direction }}</span>
+        @if (tx.amount === 0) {
+          <span class="tx-amount muted">Account opened</span>
+        } @else {
+          <span class="tx-amount">{{ tx.amount | number: '1.2-2' }}</span>
+        }
+        <span class="tx-balance">→ {{ tx.runningBalance | number: '1.2-2' }}</span>
+        <time [attr.datetime]="tx.timestamp">{{ tx.timestamp | date: 'medium' }}</time>
+      </li>
+    }
+  </ol>
+}

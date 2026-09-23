@@ -1,0 +1,73 @@
+.sparkline {
+  margin: 0 0 var(--space-4);
+}
+
+.sparkline svg {
+  width: 100%;
+  height: 3rem;
+  color: var(--color-accent);
+}
+
+.sparkline figcaption {
+  font-size: 0.75rem;
+}
+
+.tx-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.tx-row {
+  display: grid;
+  grid-template-columns: 4.5rem 6rem 6rem 1fr;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.88rem;
+}
+
+.tx-row:last-child {
+  border-bottom: none;
+}
+
+.direction {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-credit);
+}
+
+.tx-row.debit .direction {
+  color: var(--color-debit);
+}
+
+.tx-amount,
+.tx-balance {
+  font-variant-numeric: tabular-nums;
+}
+
+.tx-balance {
+  font-weight: 600;
+}
+
+.tx-row time {
+  justify-self: end;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 40rem) {
+  .tx-row {
+    grid-template-columns: 4rem 1fr 1fr;
+  }
+
+  .tx-row time {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}

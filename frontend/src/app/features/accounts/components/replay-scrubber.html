@@ -1,0 +1,19 @@
+<div class="scrubber">
+  <p class="current">
+    <span class="current-label">Viewing</span>
+    <span class="current-value">{{ value() | date: 'medium' }}</span>
+  </p>
+  <input
+    class="slider"
+    type="range"
+    [attr.min]="min().getTime()"
+    [attr.max]="max().getTime()"
+    [attr.value]="value().getTime()"
+    (input)="onSliderInput($event)"
+    aria-label="Replay timeline: drag to rebuild the balance as of a past moment"
+  />
+  <div class="bounds">
+    <span>First event · {{ min() | date: 'short' }}</span>
+    <span>Now · {{ max() | date: 'short' }}</span>
+  </div>
+</div>

@@ -1,0 +1,85 @@
+<section>
+  @if (store.accountNotFound() && !store.selectedAccount()) {
+    <div class="empty-state">
+      <h1>Account not projected yet</h1>
+      <p class="muted">
+        No read model exists for this account id. Projections land within moments of a write —
+        if this account was never opened, it will stay on this screen.
+      </p>
+      <p><a routerLink="/accounts">← All accounts</a></p>
+    </div>
+  } @else {
+    <header class="page-header">
+      <div>
+        <a routerLink="/accounts" class="back-link">← All accounts</a>
+        <h1>Account detail</h1>
+        <p class="mono muted">{{ store.selectedAccount()?.accountId ?? id() }}</p>
+      </div>
+      @if (store.selectedAccount(); as account) {
+        <dl class="meta-list">
+          <div><dt>Type</dt><dd>{{ account.accountType }}</dd></div>
+          <div><dt>Status</dt><dd>{{ account.status }}</dd></div>
+          <div><dt>Opened</dt><dd>{{ account.openedAt | date: 'medium' }}</dd></div>
+          <div><dt>Stream version</dt><dd>{{ account.lastEventVersion }}</dd></div>
+        </dl>
+      }
+    </header>
+
+    @if (store.connectionLost()) {
+      <div class="alert error" role="alert">
+        <p>Connection lost — polling stopped. Data below may be stale.</p>
+        <button type="button" (click)="retryConnection()">Retry polling</button>
+      </div>
+    }
+
+    @if (store.selectedAccount(); as account) {
+      <div class="detail-grid">
+        <section class="panel" aria-labelledby="balance-heading">
+          <h2 id="balance-heading">Balance</h2>
+          <app-balance-display
+            [balance]="displayBalance()"
+            [asOf]="displayAsOf()"
+            [loading]="store.scrubberLoading()"
+          />
+          @if (store.scrubError(); as error) {
+            <div class="alert error" role="alert"><p>{{ error }}</p></div>
+          }
+          @if (store.isScrubbing()) {
+            <button type="button" class="ghost" (click)="backToNow()">
+              Jump back to now
+            </button>
+          }
+          <app-consistency-gap-panel [pending]="store.pendingWrite()" [current]="account" />
+        </section>
+
+        <section class="panel" aria-labelledby="replay-heading">
+          <h2 id="replay-heading">Replay scrubber</h2>
+          <p class="hint">
+            Drag to travel back in time. The balance is reconstructed server-side by replaying
+            every event up to that instant — nothing is read from a stored snapshot.
+          </p>
+          <app-replay-scrubber
+            [min]="minDate()"
+            [max]="store.scrubberMax()"
+            [value]="scrubValue()"
+            (valueChange)="onScrub($event)"
+          />
+        </section>
+
+        <section class="panel" aria-labelledby="actions-heading">
+          <h2 id="actions-heading">New transaction</h2>
+          <app-transaction-form [account]="account" [accounts]="store.accounts()" />
+        </section>
+
+        <section class="panel" aria-labelledby="history-heading">
+          <h2 id="history-heading">Event stream</h2>
+          <app-transaction-history [transactions]="store.history()" />
+        </section>
+      </div>
+    }
+
+    @if (!store.selectedAccount() && !store.accountNotFound()) {
+      <p class="muted">Loading account…</p>
+    }
+  }
+</section>

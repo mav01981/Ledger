@@ -1,0 +1,22 @@
+<div class="shell">
+  <header class="topbar">
+    <a class="brand" routerLink="/accounts">
+      <span class="brand-mark" aria-hidden="true">Σ</span>
+      Ledger Dashboard
+    </a>
+    <nav aria-label="Primary">
+      <a routerLink="/accounts" class="nav-link">Accounts</a>
+    </nav>
+  </header>
+
+  <main class="main">
+    <router-outlet />
+  </main>
+
+  <footer class="footer">
+    <p>
+      This demo runs on a CQRS + event-sourced ledger. No balance is ever stored — every figure on
+      screen is rebuilt by replaying immutable events.
+    </p>
+  </footer>
+</div>

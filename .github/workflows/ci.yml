@@ -55,3 +55,66 @@ jobs:
           name: test-results
           path: TestResults
           if-no-files-found: error
+
+  frontend:
+    name: Frontend (Angular + Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (production, strict template check)
+        run: npx ng build
+
+      - name: Unit tests (Vitest)
+        run: npx ng test --no-watch
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Start backend stack
+        run: docker compose up -d --build
+        working-directory: .
+
+      - name: Wait for backend API
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:5001/api/accounts > /dev/null; then
+              echo "API is up"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "API did not become ready in time"
+          docker compose logs
+          exit 1
+        working-directory: .
+
+      - name: E2E tests (Playwright)
+        run: npx playwright test
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            frontend/playwright-report
+            frontend/test-results
+          if-no-files-found: ignore

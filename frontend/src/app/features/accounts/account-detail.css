@@ -1,0 +1,36 @@
+.meta-list {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(4, auto);
+  gap: var(--space-1) var(--space-4);
+}
+
+.meta-list div {
+  display: flex;
+  flex-direction: column;
+}
+
+.meta-list dt {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.meta-list dd {
+  margin: 0;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+@media (max-width: 56rem) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+}

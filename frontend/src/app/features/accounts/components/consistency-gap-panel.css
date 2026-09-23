@@ -1,0 +1,26 @@
+.gap-panel {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid #fde68a;
+  border-radius: var(--radius-sm);
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+}
+
+.gap-panel h3 {
+  margin: 0 0 var(--space-2);
+}
+
+.gap-panel p {
+  margin: 0 0 var(--space-2);
+  font-size: 0.88rem;
+}
+
+.gap-panel p:last-child {
+  margin-bottom: 0;
+}
+
+.gap-panel .hint {
+  color: inherit;
+  opacity: 0.85;
+}

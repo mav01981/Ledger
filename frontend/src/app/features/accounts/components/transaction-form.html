@@ -1,0 +1,62 @@
+<form class="tx-form" (submit)="submitForm($event)" novalidate>
+  <fieldset class="mode-toggle">
+    <legend class="sr-only">Transaction type</legend>
+    @for (m of modes; track m) {
+      <label class="mode-option" [class.active]="mode() === m">
+        <input type="radio" name="tx-mode" [checked]="mode() === m" (change)="setMode(m)" />
+        {{ m }}
+      </label>
+    }
+  </fieldset>
+
+  <div class="field">
+    <label for="tx-amount">Amount</label>
+    <input
+      id="tx-amount"
+      type="number"
+      inputmode="decimal"
+      min="0.01"
+      step="0.01"
+      placeholder="0.00"
+      [value]="amount()"
+      (input)="onAmountInput($event)"
+      [attr.aria-invalid]="amountInvalid()"
+    />
+    @if (amountInvalid()) {
+      <p class="field-error" role="alert">Enter a positive amount.</p>
+    }
+  </div>
+
+  @if (mode() === 'transfer') {
+    <div class="field">
+      <label for="tx-target">To account (this account is the source)</label>
+      <select id="tx-target" [value]="targetAccountId()" (change)="onTargetChange($event)">
+        <option value="" disabled>Select destination</option>
+        @for (other of otherAccounts(); track other.accountId) {
+          <option [value]="other.accountId">
+            {{ other.accountId | slice: 0: 8 }}… — balance {{ other.balance | number: '1.2-2' }}
+          </option>
+        }
+      </select>
+      @if (otherAccounts().length === 0) {
+        <p class="field-error" role="alert">
+          No other accounts yet — open one from the accounts page to transfer.
+        </p>
+      }
+    </div>
+  }
+
+  @if (store.writeError(); as error) {
+    <div class="alert error" role="alert"><p>{{ error }}</p></div>
+  }
+
+  @if (store.pendingWrite(); as pending) {
+    <p class="pending-note" role="status">
+      Accepted at stream version {{ pending.newVersion }} — waiting for the read model…
+    </p>
+  }
+
+  <button type="submit" class="primary" [disabled]="!canSubmit() || submitting()">
+    {{ submitting() ? 'Recording…' : 'Record ' + mode() }}
+  </button>
+</form>

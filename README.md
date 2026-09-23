@@ -1,6 +1,9 @@
 # Ledger Demo — CQRS + Event Sourcing
 
-A double-entry ledger/wallet service built with CQRS and event sourcing.
+A double-entry ledger/wallet service built with CQRS and event sourcing, with an
+Angular dashboard (`frontend/`) that makes the eventual-consistency behaviour visible —
+including a replay scrubber that reconstructs the balance as of any past moment via
+server-side event replay.
 
 ## Why Event Sourcing?
 
@@ -40,6 +43,7 @@ stream version. Clients can poll until the read model reflects that version.
 ### Prerequisites
 - .NET 10.0 SDK (for local development)
 - Docker & Docker Compose (for containerized run)
+- Node.js 22.22+ / 24.11+ (frontend)
 
 ### Run with Docker Compose (recommended)
 
@@ -62,6 +66,18 @@ dotnet run
 ```
 
 The API will be available at `https://localhost:5001` with Swagger UI.
+
+### Frontend dashboard
+
+```bash
+cd frontend
+npm install
+npm start    # ng serve with dev proxy: /api → http://localhost:5001
+```
+
+Open `http://localhost:4200/`. Requires the backend running (see above); the dev-server
+proxy (`frontend/proxy.conf.json`) forwards `/api`, so no CORS configuration is needed.
+See [frontend/README.md](frontend/README.md) for details.
 
 ### Example Requests
 
@@ -129,6 +145,38 @@ Integration tests cover:
 - **Event Sourcing**: Point-in-time balance reconstruction via event replay
 - **End-to-End Flows**: Full lifecycle scenarios with multiple accounts and transactions
 
+### Frontend Unit Tests (Vitest)
+
+```bash
+cd frontend
+npx ng test --no-watch    # or `npm test` for watch mode
+```
+
+Component and store tests (consistency-gap panel, replay scrubber, app shell).
+
+### Frontend E2E Tests (Playwright)
+
+```bash
+# Backend must be running (docker compose up --build); ng serve is started or reused automatically
+cd frontend
+npm run test:e2e
+```
+
+The suite (`frontend/e2e/`) exercises the happy path from
+[docs/spec-frontEnd.md](docs/spec-frontEnd.md): open account → deposit →
+consistency-gap panel resolves → scrubber replay, plus inline surfacing of an API
+rejection (insufficient funds).
+
+## Continuous Integration
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs two jobs in parallel on every
+push / PR:
+
+| Job | Steps |
+|---|---|
+| **Build & Test** | `dotnet build` → unit tests (`Ledger.Tests`) → integration tests (`Ledger.IntegrationTests`, Testcontainers) → upload TRX results |
+| **Frontend (Angular + Playwright)** | `ng build` (strict template check) → `ng test --no-watch` → `docker compose up -d --build` + API health wait → Playwright e2e (chromium) → upload Playwright report on failure |
+
 ## Project Structure
 
 | Project | Responsibility |
@@ -139,6 +187,7 @@ Integration tests cover:
 | `Ledger.Api` | REST controllers, DI configuration |
 | `Ledger.Tests` | Domain unit tests |
 | `Ledger.IntegrationTests` | End-to-end integration tests with Testcontainers |
+| `frontend/` | Angular 21 dashboard — Vitest unit tests, Playwright e2e (`frontend/e2e/`) |
 
 ## Tech Stack
 - C# / .NET 10.0
@@ -148,3 +197,6 @@ Integration tests cover:
 - Testcontainers + WebApplicationFactory (integration testing)
 - MassTransit (referenced, outbox relay implemented as BackgroundService)
 - Docker & Docker Compose (containerized deployment)
+- Angular 21 (standalone, zoneless, signals + `OnPush`) — [frontend/README.md](frontend/README.md)
+- Vitest (frontend unit tests) + Playwright (frontend e2e)
+- GitHub Actions CI (parallel .NET and frontend jobs)

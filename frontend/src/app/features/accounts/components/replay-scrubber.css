@@ -1,0 +1,44 @@
+.scrubber {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.current {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.current-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.current-value {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.slider {
+  width: 100%;
+  accent-color: var(--color-accent);
+  cursor: grab;
+}
+
+.slider:active {
+  cursor: grabbing;
+}
+
+.bounds {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}

@@ -1,0 +1,12 @@
+@if (visible()) {
+  <aside class="gap-panel" role="status" aria-live="polite">
+    <h3>Eventual consistency at work</h3>
+    <p>
+      The write was accepted at stream version <strong>{{ pending()!.newVersion }}</strong>.
+      The read model is at version
+      <strong>{{ current() ? current()!.lastEventVersion : '…' }}</strong> — it still has to
+      replay the new event before the balance catches up.
+    </p>
+    <p class="hint">Polling every 3s until the versions match…</p>
+  </aside>
+}
