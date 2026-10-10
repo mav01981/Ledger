@@ -66,6 +66,30 @@ public class AccountTests
         Assert.Equal(new Money(-100m), account.Balance);
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void ApplyDebit_WithNonPositiveAmount_ShouldThrow(decimal amount)
+    {
+        var account = CreateOpenAccount();
+
+        Assert.Throws<DomainException>(() =>
+            account.ApplyDebit(Guid.NewGuid(), new Money(amount), T));
+        Assert.Equal(Money.Zero, account.Balance);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void ApplyCredit_WithNonPositiveAmount_ShouldThrow(decimal amount)
+    {
+        var account = CreateOpenAccount();
+
+        Assert.Throws<DomainException>(() =>
+            account.ApplyCredit(Guid.NewGuid(), new Money(amount), T));
+        Assert.Equal(Money.Zero, account.Balance);
+    }
+
     [Fact]
     public void LoadFromHistory_ShouldReconstructState()
     {

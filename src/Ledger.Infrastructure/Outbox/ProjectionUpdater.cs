@@ -65,7 +65,6 @@ public class ProjectionUpdater
             RunningBalance = 0m
         });
 
-        await _context.SaveChangesAsync(ct);
     }
 
     private async Task ApplyFundsDepositedAsync(FundsDeposited e, CancellationToken ct)
@@ -89,7 +88,6 @@ public class ProjectionUpdater
             RunningBalance = account?.Balance ?? e.Amount.Amount
         });
 
-        await _context.SaveChangesAsync(ct);
     }
 
     private async Task ApplyFundsWithdrawnAsync(FundsWithdrawn e, CancellationToken ct)
@@ -113,7 +111,6 @@ public class ProjectionUpdater
             RunningBalance = account?.Balance ?? -e.Amount.Amount
         });
 
-        await _context.SaveChangesAsync(ct);
     }
 
     private async Task ApplyTransferPostedAsync(TransferPosted ev, CancellationToken ct)
@@ -143,7 +140,6 @@ public class ProjectionUpdater
                 RunningBalance = account?.Balance ?? 0m
             });
         }
-        await _context.SaveChangesAsync(ct);
     }
 
     private static async Task ApplyTransactionReversedAsync(TransactionReversed e, CancellationToken ct)

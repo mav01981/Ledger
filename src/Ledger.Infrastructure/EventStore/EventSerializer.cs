@@ -14,45 +14,32 @@ public static class EventSerializer
         Converters = { new JsonStringEnumConverter() }
     };
 
-    private static readonly Dictionary<Type, string> TypeMap = new()
-    {
-        { typeof(AccountOpened), nameof(AccountOpened) },
-        { typeof(FundsDeposited), nameof(FundsDeposited) },
-        { typeof(FundsWithdrawn), nameof(FundsWithdrawn) },
-        { typeof(TransferPosted), nameof(TransferPosted) },
-        { typeof(TransactionReversed), nameof(TransactionReversed) }
-    };
-
-    private static readonly Dictionary<string, string> ReverseTypeMap = new()
-    {
-        { nameof(AccountOpened), "Ledger.Domain.Events.AccountOpened" },
-        { nameof(FundsDeposited), "Ledger.Domain.Events.FundsDeposited" },
-        { typeof(FundsWithdrawn).Name, "Ledger.Domain.Events.FundsWithdrawn" },
-        { nameof(TransferPosted), "Ledger.Domain.Events.TransferPosted" },
-        { nameof(TransactionReversed), "Ledger.Domain.Events.TransactionReversed" }
-    };
-
     public static string Serialize(DomainEvent @event)
     {
-        var json = JsonSerializer.Serialize(@event, @event.GetType(), Options);
-        return json;
+        ArgumentNullException.ThrowIfNull(@event);
+        return JsonSerializer.Serialize(@event, @event.GetType(), Options);
     }
 
     public static DomainEvent Deserialize(string eventType, string payload)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(eventType);
+        ArgumentNullException.ThrowIfNull(payload);
+
         return eventType switch
         {
-            nameof(AccountOpened) => JsonSerializer.Deserialize<AccountOpened>(payload, Options)!,
-            nameof(FundsDeposited) => JsonSerializer.Deserialize<FundsDeposited>(payload, Options)!,
-            nameof(FundsWithdrawn) => JsonSerializer.Deserialize<FundsWithdrawn>(payload, Options)!,
-            nameof(TransferPosted) => JsonSerializer.Deserialize<TransferPosted>(payload, Options)!,
-            nameof(TransactionReversed) => JsonSerializer.Deserialize<TransactionReversed>(payload, Options)!,
+            nameof(AccountOpened) => Deserialize<AccountOpened>(payload),
+            nameof(FundsDeposited) => Deserialize<FundsDeposited>(payload),
+            nameof(FundsWithdrawn) => Deserialize<FundsWithdrawn>(payload),
+            nameof(TransferPosted) => Deserialize<TransferPosted>(payload),
+            nameof(TransactionReversed) => Deserialize<TransactionReversed>(payload),
             _ => throw new InvalidOperationException($"Unknown event type: {eventType}")
         };
     }
 
     public static string GetEventTypeName(DomainEvent @event)
     {
+        ArgumentNullException.ThrowIfNull(@event);
+
         return @event switch
         {
             AccountOpened => nameof(AccountOpened),
@@ -63,4 +50,8 @@ public static class EventSerializer
             _ => throw new InvalidOperationException($"Unknown event type: {@event.GetType()}")
         };
     }
+
+    private static T Deserialize<T>(string payload) where T : DomainEvent =>
+        JsonSerializer.Deserialize<T>(payload, Options)
+        ?? throw new JsonException($"The payload for {typeof(T).Name} deserialized to null.");
 }

@@ -2,6 +2,7 @@ using System.Text.Json;
 using Ledger.Domain;
 using Ledger.Domain.Events;
 using Ledger.Infrastructure.Data;
+using Ledger.Infrastructure.Outbox;
 using Microsoft.EntityFrameworkCore;
 
 namespace Ledger.Infrastructure.EventStore;
@@ -9,10 +10,12 @@ namespace Ledger.Infrastructure.EventStore;
 public class PostgresEventStore : IEventStore
 {
     private readonly LedgerDbContext _context;
+    private readonly OutboxMetrics _outboxMetrics;
 
-    public PostgresEventStore(LedgerDbContext context)
+    public PostgresEventStore(LedgerDbContext context, OutboxMetrics outboxMetrics)
     {
         _context = context;
+        _outboxMetrics = outboxMetrics;
     }
 
     public async Task<IReadOnlyList<DomainEvent>> ReadStreamAsync(Guid streamId, long fromVersion = -1, CancellationToken ct = default)
@@ -32,7 +35,7 @@ public class PostgresEventStore : IEventStore
             .Where(e => e.StreamId == streamId)
             .MaxAsync(e => (long?)e.StreamPosition, ct) ?? -1;
 
-        if (expectedVersion != -1 && lastPosition != expectedVersion)
+        if (lastPosition != expectedVersion)
         {
             throw new InvalidOperationException(
                 $"Concurrency conflict on stream {streamId}. Expected version {expectedVersion}, but stream is at {lastPosition}.");
@@ -70,6 +73,7 @@ public class PostgresEventStore : IEventStore
 
         await _context.Events.AddRangeAsync(records, ct);
         await _context.SaveChangesAsync(ct);
+        _outboxMetrics.RecordEnqueued(events.Count);
     }
 
     public async Task<IReadOnlyList<DomainEvent>> ReadAllAsync(long afterPosition = -1, CancellationToken ct = default)

@@ -48,11 +48,30 @@ stream version. Clients can poll until the read model reflects that version.
 ### Run with Docker Compose (recommended)
 
 ```bash
-# Start PostgreSQL and the API
+# Start PostgreSQL, the API, and the local observability stack
 docker compose up --build
 ```
 
 The API will be available at `http://localhost:5001` with Swagger UI.
+Grafana is available at `http://localhost:3000` (default local credentials:
+`admin` / `admin`). Open **Explore**, select the provisioned **Loki** data source,
+and query `{service_name="Ledger.Api"}` to view API logs. Logs are forwarded over
+OTLP through the Collector and stored in Loki; Grafana is the query and dashboard
+UI. Loki and Grafana data are persisted in Docker volumes.
+The provisioned **Ledger API Overview** dashboard shows request rate and p95
+request duration. Metrics flow over OTLP to the Collector, are scraped by
+Prometheus, and are available in Grafana through its Prometheus data source.
+The dashboard also includes Outbox enqueue/process rates, pending backlog,
+processing failures, and p95 processing duration.
+
+Open **Dashboards → Ledger → Ledger API Overview**. To verify telemetry in
+Grafana, open **Explore**, select **Prometheus**, and run
+`ledger_outbox_messages_pending{service_name="Ledger.Api"}`. To see request
+activity, run `http_server_request_duration_seconds_count{service_name="Ledger.Api"}`.
+Open an account or post a transaction to generate Outbox activity; counters only
+appear after their operation occurs. OpenTelemetry metric names are normalized
+for Prometheus (dots become underscores, and counters have a `_total` suffix).
+Allow up to a minute for newly emitted metrics to be exported and scraped.
 
 ### Run locally
 
@@ -66,6 +85,38 @@ dotnet run
 ```
 
 The API will be available at `https://localhost:5001` with Swagger UI.
+
+## OpenTelemetry
+
+The API exports traces, metrics, and structured logs over OTLP. Automatic
+instrumentation covers ASP.NET Core requests, `HttpClient`, .NET runtime metrics,
+and PostgreSQL operations and metrics from Npgsql. Set these standard OpenTelemetry
+environment variables to point the API at an OTLP-compatible collector or backend:
+
+```text
+OTEL_SERVICE_NAME=Ledger.Api
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
+OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+OTEL_RESOURCE_ATTRIBUTES=deployment.environment=development
+```
+
+In Docker Compose, logs are sent to the local Collector over OTLP/HTTP and
+ingested by Loki. Metrics are sent to the Collector over OTLP/HTTP, exposed in
+Prometheus format, and scraped by Prometheus. Grafana provisions Loki and
+Prometheus as data sources and includes a starter API dashboard. Metrics include
+ASP.NET Core request metrics, .NET runtime metrics, Npgsql metrics, and
+low-cardinality Outbox counters, backlog, and processing-duration histogram.
+
+Npgsql currently documents its OpenTelemetry tracing integration as experimental.
+When launched by an Aspire AppHost, the API uses Aspire's injected OTLP endpoint,
+protocol, and headers; no Aspire-specific telemetry setup is needed in this project.
+Keep a single telemetry pipeline for this API rather than also calling a
+ServiceDefaults telemetry registration, which would duplicate exported signals.
+
+For production, configure parent-based head sampling with
+`OTEL_TRACES_SAMPLER=parentbased_traceidratio` and
+`OTEL_TRACES_SAMPLER_ARG` set to the desired fraction. If all errors and slow
+traces must be retained, use collector tail sampling instead.
 
 ### Frontend dashboard
 

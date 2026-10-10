@@ -18,6 +18,11 @@ public static class DependencyInjection
     public static IServiceCollection AddLedgerInfrastructure(
         this IServiceCollection services, IConfiguration configuration)
     {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        services.TryAddSingleton<OutboxMetrics>();
+
         var connectionString = configuration.GetConnectionString("LedgerDb")
             ?? "Host=localhost;Database=ledger;Username=postgres;Password=postgres";
 

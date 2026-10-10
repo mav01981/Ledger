@@ -22,8 +22,7 @@ public class Account : AggregateRoot
     public void Deposit(Guid transactionId, Money amount, DateTime occurredAt)
     {
         EnsureOpen();
-        if (amount.IsZero || amount.IsNegative)
-            throw new DomainException("Deposit amount must be positive.");
+        EnsurePositiveAmount(amount, "Deposit");
 
         Apply(FundsDeposited.Create(Id, transactionId, amount, occurredAt));
     }
@@ -31,8 +30,7 @@ public class Account : AggregateRoot
     public void Withdraw(Guid transactionId, Money amount, DateTime occurredAt)
     {
         EnsureOpen();
-        if (amount.IsZero || amount.IsNegative)
-            throw new DomainException("Withdrawal amount must be positive.");
+        EnsurePositiveAmount(amount, "Withdrawal");
 
         var newBalance = Balance - amount;
         if (newBalance.IsNegative && AccountType != AccountType.Overdraft)
@@ -44,6 +42,8 @@ public class Account : AggregateRoot
     public void ApplyDebit(Guid transactionId, Money amount, DateTime occurredAt)
     {
         EnsureOpen();
+        EnsurePositiveAmount(amount, "Debit");
+
         var newBalance = Balance - amount;
         if (newBalance.IsNegative && AccountType != AccountType.Overdraft)
             throw new DomainException($"Insufficient funds in account {Id}.");
@@ -54,7 +54,15 @@ public class Account : AggregateRoot
     public void ApplyCredit(Guid transactionId, Money amount, DateTime occurredAt)
     {
         EnsureOpen();
+        EnsurePositiveAmount(amount, "Credit");
+
         Apply(FundsDeposited.Create(Id, transactionId, amount, occurredAt));
+    }
+
+    private static void EnsurePositiveAmount(Money amount, string operation)
+    {
+        if (amount.IsZero || amount.IsNegative)
+            throw new DomainException($"{operation} amount must be positive.");
     }
 
     private void EnsureOpen()

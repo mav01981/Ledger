@@ -2,9 +2,37 @@ using Ledger.Domain;
 using Ledger.Infrastructure;
 using Ledger.Infrastructure.Data;
 using Ledger.Infrastructure.EventStore;
-using Microsoft.EntityFrameworkCore;
+using Ledger.Infrastructure.Outbox;
+using Npgsql;
+using OpenTelemetry;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService(
+        serviceName: Environment.GetEnvironmentVariable("OTEL_SERVICE_NAME")
+            ?? builder.Environment.ApplicationName,
+        serviceVersion: typeof(Program).Assembly.GetName().Version?.ToString()))
+    .WithTracing(tracing => tracing
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddNpgsql())
+    .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddRuntimeInstrumentation()
+        .AddNpgsqlInstrumentation()
+        .AddMeter(OutboxMetrics.MeterName))
+    .UseOtlpExporter();
+
+builder.Logging.AddOpenTelemetry(options =>
+{
+    options.IncludeFormattedMessage = true;
+    options.IncludeScopes = true;
+});
 
 // Add services to the container.
 builder.Services.AddOpenApi();

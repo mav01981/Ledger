@@ -19,13 +19,17 @@ public class PostgresTransactionStore : ITransactionStore
         var record = await _context.Transfers
             .FirstOrDefaultAsync(t => t.TransactionId == transactionId, ct);
 
-        if (record == null) return null;
+        if (record is null)
+            return null;
 
-        var lines = JsonSerializer.Deserialize<List<TransactionLine>>(record.Lines);
+        var lines = JsonSerializer.Deserialize<List<TransactionLine>>(record.Lines)
+            ?? throw new JsonException(
+                $"Transaction {transactionId} contains a null transaction-lines payload.");
+
         return new Transfer
         {
             TransactionId = record.TransactionId,
-            Lines = lines ?? new List<TransactionLine>(),
+            Lines = lines,
             Status = record.Status,
             CreatedAt = record.CreatedAt
         };

@@ -7,10 +7,12 @@ namespace Ledger.Infrastructure.Outbox;
 public class OutboxWriter
 {
     private readonly LedgerDbContext _context;
+    private readonly OutboxMetrics _metrics;
 
-    public OutboxWriter(LedgerDbContext context)
+    public OutboxWriter(LedgerDbContext context, OutboxMetrics metrics)
     {
         _context = context;
+        _metrics = metrics;
     }
 
     public async Task AddToOutboxAsync(IReadOnlyList<DomainEvent> events, CancellationToken ct)
@@ -27,5 +29,6 @@ public class OutboxWriter
             });
         }
         await _context.SaveChangesAsync(ct);
+        _metrics.RecordEnqueued(events.Count);
     }
 }

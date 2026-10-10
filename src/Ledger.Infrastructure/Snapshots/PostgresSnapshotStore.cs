@@ -23,9 +23,9 @@ public class PostgresSnapshotStore : ISnapshotStore
 
         if (record is null) return null;
 
-        var state = JsonSerializer.Deserialize<SnapshotState>(record.State);
-        
-        if (state is null) return null;
+        var state = JsonSerializer.Deserialize<SnapshotState>(record.State)
+            ?? throw new JsonException(
+                $"Snapshot {record.AggregateId} at version {record.Version} contains a null state payload.");
 
         return new AccountSnapshot(
             record.AggregateId,
@@ -39,12 +39,7 @@ public class PostgresSnapshotStore : ISnapshotStore
 
     public async Task SaveAsync(AccountSnapshot snapshot, CancellationToken ct = default)
     {
-        var state = new SnapshotState
-        {
-            AccountType = snapshot.AccountType,
-            Status = snapshot.AccountStatus,
-            Balance = snapshot.Balance
-        };
+        var state = new SnapshotState(snapshot.AccountType, snapshot.AccountStatus, snapshot.Balance);
 
         var record = new SnapshotRecord
         {
@@ -58,10 +53,5 @@ public class PostgresSnapshotStore : ISnapshotStore
         await _context.SaveChangesAsync(ct);
     }
 
-    private class SnapshotState
-    {
-        public AccountType AccountType { get; set; }
-        public AccountStatus Status { get; set; }
-        public Money Balance { get; set; }
-    }
+    private sealed record SnapshotState(AccountType AccountType, AccountStatus Status, Money Balance);
 }

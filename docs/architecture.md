@@ -68,6 +68,31 @@ graph LR
     ES -->|events| O
 ```
 
+## Observability Architecture
+
+The local Docker Compose stack uses the OpenTelemetry Collector instead of
+Promtail: the API pushes logs and metrics to the Collector over OTLP/HTTP. The
+Collector forwards logs to Loki and exposes metrics for Prometheus to scrape.
+Grafana queries both data sources.
+
+```mermaid
+flowchart TB
+    App["Applications / Services<br/>Emit metrics and logs"]
+    Collector["OpenTelemetry Collector<br/>OTLP/HTTP receiver :4318"]
+    Prometheus["Prometheus<br/>Metrics database :9090"]
+    Loki["Loki<br/>Log aggregator :3100"]
+    Grafana["Grafana<br/>Dashboards :3000"]
+
+    App -->|"Push logs and metrics (OTLP/HTTP)"| Collector
+    Prometheus -->|"Pull / scrape metrics (:9464/metrics)"| Collector
+    Collector -->|"Push logs (OTLP)"| Loki
+    Grafana -->|"Query metrics"| Prometheus
+    Grafana -->|"Query logs"| Loki
+```
+
+Promtail is not part of the current Compose stack; the OpenTelemetry Collector
+receives application logs directly over OTLP and forwards them to Loki.
+
 ## Project Structure
 
 ```
